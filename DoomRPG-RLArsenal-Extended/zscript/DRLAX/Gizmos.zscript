@@ -330,6 +330,10 @@ Class DRLAX_GizmoHandler : Thinker
                 gizmos.Push("DRLAX_WeaponRecycler");
                 gizmos.Push("DRLAX_ModReviser");
                 gizmos.Push("DRLAX_ModExtractor");
+                if(Cvar.GetCvar("DRLAX_familiarunlocks").GetString() != "")
+                {
+                    gizmos.Push("DRLAX_Familiardeployer");
+                }
                 break;
 
                 Case 2:
@@ -1335,6 +1339,7 @@ Class DRLAX_Familiardeployer : DRLAX_GizmoObject
             if(Level.Total_Monsters * 0.90 <= Level.Killed_Monsters)
             {
                 isready = true;
+                Console.Printf("\cdA nearby device has become active!");
                 SetStateLabel("Activate");
             }
         }

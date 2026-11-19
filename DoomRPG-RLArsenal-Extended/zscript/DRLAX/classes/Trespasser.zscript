@@ -3,9 +3,15 @@ class RLTrespasserStartingLoadout : CustomInventory
 	states
 	{
 		Pickup:
-		TNT1 A 0 A_GiveInventory("DRLAX_TrespasserScanner", 1);
-		TNT1 A 0 A_GiveInventory("DRLAX_ShavedArms", 1);
-		TNT1 A 0 A_GiveInventory("DRLAX_TrespasserScatterShot", 1);
+		TNT1 A 0 
+		{
+			A_GiveInventory("DRLAX_TrespasserScanner", 1);
+			A_GiveInventory("DRLAX_ShavedArms", 1);
+			if(!DRLAX_PlayTools.NoPerk(inv.owner.PlayerNumber()))
+			{
+				A_GiveInventory("DRLAX_TrespasserScatterShot", 1);
+			}
+		}
 		stop;
 	}
 }
@@ -167,69 +173,6 @@ Class RLTrespasserEvents : EventHandler
 		}
 	}
 
-	/* old splinter shot
-	
-	void SplinterShot(int damage, actor hitactor, actor playeractor, int angle, String damagetype)
-	{
-		if(hitactor)
-		{
-			for(int i; i<Max(1, Min(damage / 4, 256)); i++)
-			{
-				FLineTraceData RemoteRay;
-				bool hit = hitactor.LineTrace(
-				angle + frandom(-20.0, 20.0),
-				3000,
-				frandom(-6.0, 6.0),
-				offsetz: hitactor.height * 0.5,
-				data: RemoteRay
-				);
-
-				if (hit)
-				{
-					if(RemoteRay.HitType == TRACE_HitWall)
-					{
-						if(damagetype ~== "Bullet")
-						{
-							SpawnPuff("DRLAX_SplinterShot", RemoteRay.HitLocation, playeractor);
-						}
-						else if(damagetype ~== "Fire")
-						{
-							SpawnPuff("DRLAX_SplinterShotFire", RemoteRay.HitLocation, playeractor);
-						}
-						else if(damagetype ~== "Plasma")
-						{
-							SpawnPuff("DRLAX_SplinterShotPlasma", RemoteRay.HitLocation, playeractor);
-						}
-						else if(damagetype ~== "Unholy")
-						{
-							SpawnPuff("DRLAX_SplinterShotUnholy", RemoteRay.HitLocation, playeractor);
-						}
-						else if(damagetype ~== "Holy")
-						{
-							SpawnPuff("DRLAX_SplinterShotPlasma", RemoteRay.HitLocation, playeractor);
-						}
-						else
-						{
-							SpawnPuff("DRLAX_SplinterShot", RemoteRay.HitLocation, playeractor);
-						}
-					}
-
-					if(RemoteRay.HitType == TRACE_HitActor)
-					{
-						Actor v = RemoteRay.HitActor;
-
-						if(v)
-						{
-							v.DamageMobj(hitactor, playeractor, 6, damagetype, DMG_USEANGLE, angle);
-							v.SpawnBlood(RemoteRay.HitLocation, angle, damage);
-						}
-					}
-				}
-			}
-		}
-	}
-	*/
-
 	void SpawnPuff(String puff, Vector3 pos, Actor source)
 	{
 		Vector3 newpos = pos - source.pos;
@@ -330,7 +273,7 @@ Class RLTrespasserEvents : EventHandler
 
             if(p && e.DamageFlags & DMG_PLAYERATTACK)
             {
-                if(p.ReadyWeapon is "RLPistolWeapon")
+                if(p.ReadyWeapon is "RLPistolWeapon" || p.ReadyWeapon is "RLMarathonShotguns" || p.ReadyWeapon is "RLAssaultRifleUzi")
                 {
                     //Console.Printf("" .. e.damage);
                     SplinterShot(e.damage, e.Thing, a, e.DamageAngle, e.Damagetype);
@@ -382,25 +325,7 @@ Class RLTrespasserEvents : EventHandler
 		}
 	}
 }
-/*
-class testdummy : Cacodemon
-{
-	Default
-	{
-		health 9999999999;
-		+NODAMAGETHRUST;
-		mass 99999999999;
-	}
 
-
-	states
-	{
-		Pain:
-		"####" "#" -1;
-		stop;
-	}
-}
-*/
 class DRLAX_SplinterShot : Actor
 {
 	Default

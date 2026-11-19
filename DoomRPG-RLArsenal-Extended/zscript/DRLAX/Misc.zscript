@@ -33,6 +33,11 @@ Class DRLAX_ClassEvents : EventHandler
 			return;
 		}
 
+		if(players[e.Thing.PlayerNumber()].mo == e.Thing)
+		{
+			CheckAdaptiveSettings(e.Thing);
+		}
+
 		String clsn = e.Thing.GetClassName();
 
 		DRLAX_PitGuardian p = DRLAX_PitGuardian(e.Thing);
@@ -242,7 +247,9 @@ Class DRLAX_ClassEvents : EventHandler
         {
 			int extraluck;
 			
-			if(e.Thing.target && e.Thing.target is "DoomRLNomad")
+			bool noperk = DRLAX_PlayTools.NoPerk(e.Thing.target.PlayerNumber());
+
+			if(e.Thing.target && e.Thing.target is "DoomRLNomad" && !noperk)
 			{
 				extraluck = DRLAX_UnlockEvents.GetBeatenLevels();
 			}
@@ -287,6 +294,45 @@ Class DRLAX_ClassEvents : EventHandler
 				e.Thing.A_SpawnItemEx(items[random(0, items.Size() - 1)], 0, 0, 15, frandom(2,4), 0, 6, random(0, 360));
             }
         }
+	}
+
+	void CheckAdaptiveSettings(Actor a)
+	{
+		int setting = Cvar.GetCvar("DRLAX_adpativesetting").GetInt();
+
+		int adaptmax = Cvar.GetCvar("DRLAX_adpativesetting_max").GetInt();
+		int adaptmin = Cvar.GetCvar("DRLAX_adpativesetting_min").GetInt();
+
+		string dinv = "RLDangerLevel";
+		class<Actor> cls = dinv;
+
+		if(!cls)
+		{
+			return;
+		}
+
+		if(setting)
+		{
+			switch(setting)
+			{
+				Case 1:
+				if(a.CountInv(dinv) < adaptmin)
+				{
+					a.SetInventory(dinv, adaptmin);
+				}
+
+				if(a.CountInv(dinv) > adaptmax)
+				{
+					a.SetInventory(dinv, adaptmax);
+				}
+				break;
+
+				Case 2:
+				a.SetInventory(dinv, random(adaptmin, adaptmax));
+				break;
+			}
+		}
+
 	}
 }
 
@@ -728,6 +774,42 @@ Class DRLAX_DebrisFX : Actor
 			if(a)
 			{
 				a.A_SpawnItemEx("DRLAX_DebrisFX", 0, 0, (a.height/2) + random(0, 8), frandom(3, 8), 0, frandom(5, 10), random(0,360), SXF_NOCHECKPOSITION);
+			}
+		}
+	}
+}
+
+class testcrates : actor
+{
+	states
+	{
+		Spawn:
+		PLAY A 0;
+		PLAY A 1
+		{
+			for(int i; i<100; i++)
+			{
+				A_SpawnItemEx("RLSupplyCrate", 0, 0, 0, 0, 0, 0, 0, SXF_NOCHECKPOSITION);
+			}
+		}
+		stop;
+	}
+}
+
+class famball : actor
+{
+	states
+	{
+		Spawn:
+		PLAY A 0;
+		PLAY A 1
+		{
+			Array<String> fams;
+			DRLAX_UnlockFunctions.ParseUnlocks(fams);
+			DRLAX_FamiliarBall fb = DRLAX_FamiliarBall(Actor.Spawn("DRLAX_FamiliarBall", pos));
+			if(fb)
+			{
+				fb.Init(fams[random(0, fams.Size() - 1)]);
 			}
 		}
 	}

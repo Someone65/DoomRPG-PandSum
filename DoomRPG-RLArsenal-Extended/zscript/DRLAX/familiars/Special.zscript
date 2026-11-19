@@ -409,7 +409,7 @@ class DRLAX_TyphonFamiliar : DRLAX_FamiliarBase
         TYPH ABCD 8 FamiliarIdle();
         loop;
         Missile: 
-        TYPH D 0 
+        TYPH D 10
         {
             if(tracer)
             {
@@ -426,29 +426,18 @@ class DRLAX_TyphonFamiliar : DRLAX_FamiliarBase
             Vel3DFromAngle(20, angle, pitch);
             throwtics = 0;
             pickedactor.TriggerPainChance ("Normal", true); 
-        }
-        TYPH DDDDDDDDDDDDDDDDDDDDDDD 1
-        {
-            throwtics++;
-            if(pickedactor)
-            {
-                pickedactor.SetOrigin(Vec3Lerp(pickedactor.pos, pos + (0, 0, 30), throwtics * 0.03), true);
-            }
             A_Face(playeractor);
             angle += 180;
         }
         TYPH D 35
         {
             A_StartSound("familiars/typhonthrow", volume:GetVolume());
-            bool spawned;
-            Actor act;
-			[spawned, act] = A_SpawnItemEx("DRLAX_TyphonFamiliarThrow", 0, 0, 0, 50, 0, 0, flags:SXF_NOCHECKPOSITION);
-            if(spawned && act)
+            if(pickedactor)
             {
-                act.target = playeractor;
-                act.tracer = pickedactor;
+                pickedactor.DamageMobj(self, target, random(150, 200), "Melee", DMG_THRUSTLESS);
+                pickedactor.Vel3DFromAngle(80, angle, 0);
+                pickedactor.A_StartSound("familiars/typhonslam", volume:DRLAX_FamiliarBase.GetVolume());
             }
-
         }
         TYPH D 1
         {
@@ -477,7 +466,7 @@ class DRLAX_TyphonFamiliar : DRLAX_FamiliarBase
 
     override void FamiliarAction()
     {
-        if(attackcooldown == 0 && random(0, 3) == 0 && playeractor.Distance2D(tracer) < 200)
+        if(attackcooldown == 0 && random(0, 3) == 0 && playeractor.Distance2D(tracer) < 220)
         {
             if(A_SetSize(tracer.radius, tracer.height, true))
             {
@@ -1489,4 +1478,301 @@ Class DRLAX_YhollCarriedWep
 
     Class<Actor> weapon;
     Array<Class<Inventory> > mods;
+}
+
+class DRLAX_HunterFamiliar : DRLAX_FamiliarBase
+{
+    Default
+    {
+        attacksound "familiars/hunterfire";
+        +BRIGHT;
+    }
+
+    states
+    {
+        Spawn:
+        HUNT A 6;
+        HUNT BCD 6 FamiliarIdle();
+        loop;
+        Missile:
+        HUNT E 2 A_FaceTracer(0, 0);
+        HUNT F 0 A_StartSound(attacksound, volume:GetVolume());
+		HUNT F 2 
+        {
+            if(tracer)
+            {
+                tracer.DamageMobj(self, playeractor, random(15, 30), damagetype, 0);
+                Spawn("DRLAX_HunterHitSound", tracer.pos);
+            }
+
+        }
+        HUNT F 5 A_FaceTracer;
+		Goto Spawn;
+    }
+
+    override void FamiliarIdle()
+    {
+        if(attackcooldown == 0)
+        {
+            BlockThingsIterator bti = BlockThingsIterator.Create(self, 500);
+
+            while(bti.Next())
+            {
+                Actor b = bti.thing;
+
+                if(b && CheckSight(b) && b.health > 0 && !b.bFRIENDLY)
+                {
+                    if(b.GetTag() ~== "Abyss Spark" ||
+                    b.GetTag() ~== "Mysterious Six" ||
+                    (b.bISMONSTER && b.radius <= 16))
+                    {
+                        tracer = b;
+                        attackcooldown = random(10, 35);
+                        idletimer = 2;
+                        SetStateLabel("Missile");
+                        break;
+                    }
+                }
+            }
+        }
+
+        if(!tracer || tracer && tracer.health < 1)
+        {
+            tracer = null;
+            idletimer++;
+
+            if(idletimer == 9)
+            {
+                angle = random(0,360);
+                idletimer = 0;
+            }
+        }
+    }
+
+    override void FamiliarTick()
+    {
+        MoveToPlatform();
+    }
+}
+
+class DRLAX_HunterHitSound : Actor
+{
+    Default
+    {
+        +NOINTERACTION
+    }
+
+    states
+    {
+        Spawn:
+        TNT1 A 0;
+        TNT1 A 35
+        {
+            A_StartSound("familiars/hunterhit");
+        }
+        stop;
+    }
+}
+
+
+class DRLAX_MaestroFamiliar : DRLAX_FamiliarBase
+{
+    Default
+    {
+        scale 1.0;
+    }
+
+    states
+    {
+        Spawn:
+        8BDM BBCCDDEE 3 FamiliarIdle();
+        loop;
+        ReMissile:
+        Missile:
+        8BDM F 8 BRIGHT 
+        {
+            A_FaceTracer();
+            A_SpawnProjectile("DRLAX_MaestroFamiliarBuster", 8, ptr:AAPTR_TRACER);
+        }
+		8BDM F 1 BRIGHT;
+		8BDM F 1 BRIGHT 
+        {
+            if(attackcooldown >= 100)
+            {
+                return;
+            }
+
+            if(tracer && tracer.health > 0 && CheckSight(tracer))
+            {
+                SetStateLabel("Missile");
+                attackcooldown += 30;
+                return;
+            }
+            
+            FindNewTracer();
+
+            if(tracer && !tracer.player)
+            {
+                SetStateLabel("ReMissile");
+                return;
+            }
+        }
+		Goto Spawn;
+    }
+
+    override void FamiliarStart()
+    {
+        if(playeractor)
+        {
+            DRLAX_TemporaryPerksInv.Get(playeractor);
+        }
+    }
+
+    override void FamiliarAction()
+    {
+        if(attackcooldown < 100 && random(0, 3) == 0)
+        {
+            SetStateLabel("Missile");
+        }
+    }
+
+    override void FamiliarTick()
+    {
+        MoveToPlatform();
+
+        if(Level.Time == 35*2)
+        {
+            if(playeractor)
+            {
+                DRLAX_TemporaryPerksInv d = DRLAX_TemporaryPerksInv.Get(playeractor);
+
+                if(d)
+                {
+                    d.Trigger();
+                    A_StartSound("familiars/maestroperk");
+                }
+            }
+        }
+    }
+}
+
+class DRLAX_PerkData
+{
+    String ClassName;
+    String Message;
+}
+
+class DRLAX_TemporaryPerksInv : Inventory
+{
+    static DRLAX_TemporaryPerksInv Get(Actor a)
+    {
+        DRLAX_TemporaryPerksInv inv = (DRLAX_TemporaryPerksInv)(a.FindInventory("DRLAX_TemporaryPerksInv"));
+
+        if(!inv)
+        {
+            inv = (DRLAX_TemporaryPerksInv)(Spawn("DRLAX_TemporaryPerksInv", a.pos));
+            inv.AttachToOwner(a);
+        }
+
+        return inv;
+    }
+    
+    Array<DRLAX_PerkData> perks;
+    Array<String> curperks;
+
+    String lvl;
+
+    override void Tick()
+    {
+        if(lvl != Level.LevelName)
+        {
+            lvl = Level.LevelName;
+            curperks.Clear();
+            TakePerks();
+            //Console.Printf("new map, clearing temp perks");
+        }
+
+        Super.Tick();
+    }
+
+    void SetupPerks()
+    {
+        RegisterPerk("DoomRLMarine", "RLAmmoChainPerk", "Ammo Chain");
+        RegisterPerk("DoomRLScout", "RLSharpshooterPerk", "Sharp Shooter");
+        RegisterPerk("DoomRLTechnician", "RLScavengerPerk", "Scavenger");
+        RegisterPerk("DoomRLRenegade", "RLShellshockPerk", "Shellshock");
+        RegisterPerk("DoomRLDemolitionist", "RLFireangelPerk", "Fire Angel");
+    }
+
+    void Trigger()
+    {
+        String playercls = owner.GetClassName();
+
+        perks.Clear();
+
+        SetupPerks();
+
+        while(perks.Size() > 0)
+        {
+            int r = random(0, perks.Size() - 1);
+            if(curperks.Find(perks[r].ClassName) != curperks.Size())
+            {
+                perks.Delete(r);
+                //Console.Printf("already has temp perk" .. perks[r]);
+            }
+            else
+            {
+                curperks.Push(perks[r].ClassName);
+                GiveInventory(perks[r].ClassName, 1);
+                Console.Printf("\cvYou gained the " .. "\cf" .. perks[r].Message .. "\cv Perk for this level!");
+                break;
+            }
+        }
+
+        perks.Clear();
+    }
+
+    void TakePerks(void)
+    {
+        SetupPerks();
+        //Console.Printf("taking perks");
+        for(int i; i<perks.Size(); i++)
+        {
+            TakeInventory(perks[i].ClassName, 1);
+        }
+    }
+
+    void RegisterPerk(String cls, String perk, String message)
+    {
+        if(!(owner.GetClassName() == cls)) 
+        {
+            DRLAX_PerkData data = New('DRLAX_PerkData');
+
+            data.ClassName = perk;
+            data.Message = message;
+
+            perks.Push(data);
+        }
+    }
+}
+
+class DRLAX_MaestroFamiliarBuster : Actor
+{
+    Default
+    {
+        PROJECTILE;
+        +BRIGHT;
+        SeeSound "familiars/maestrofire";
+        scale 0.22;
+        speed 25;
+        DamageFunction (random(8, 12));
+        damagetype "Plasma";
+    }
+
+    states
+    {
+        Spawn:
+        LASP D -1;
+        stop;
+    }
 }

@@ -3,13 +3,20 @@ class RLBunkerStartingLoadout : CustomInventory
 	states
 	{
 		Pickup:
-        TNT1 A 0 A_TakeInventory("Clip", 60);
-		TNT1 A 0 A_TakeInventory("RLPistol", 1);
-		TNT1 A 0 A_GiveInventory("RLBlaster", 1);
-		TNT1 A 0 A_GiveInventory("Cell", 200);
-        TNT1 A 0 A_SelectWeapon("RLBlaster");
-		TNT1 A 0 A_GiveInventory("DRLAX_BunkerShield", 1);
-        TNT1 A 0 A_GiveInventory("DRLAX_BunkerRicochet", 1);
+        TNT1 A 0 
+        {
+            A_TakeInventory("Clip", 60);
+		    A_TakeInventory("RLPistol", 1);
+		    A_GiveInventory("RLBlaster", 1);
+		    A_GiveInventory("Cell", 200);
+            A_SelectWeapon("RLBlaster");
+            A_GiveInventory("DRLAX_BunkerRicochet", 1);
+			if(!DRLAX_PlayTools.NoPerk(inv.owner.PlayerNumber()))
+			{
+		        A_GiveInventory("DRLAX_BunkerShield", 1);
+            }
+        }
+
 		stop;
 	}
 }
@@ -21,6 +28,11 @@ Class RLBunkerEvents : StaticEventHandler
     {
         if(e.Thing && e.Thing is "Rocket" && e.Thing.target && e.Thing.target.player)
         {
+            if(e.Thing is "RLTantrumCannonBall")
+            {
+                return;
+            }
+
             DRLAX_BunkerRicochet r = DRLAX_BunkerRicochet(e.Thing.target.FindInventory("DRLAX_BunkerRicochet"));
             if(r && !r.off)
             {
@@ -33,15 +45,27 @@ Class RLBunkerEvents : StaticEventHandler
 
     override void WorldThingDamaged (WorldEvent e) 
     {
-        DRLAX_BunkerRicochet r = DRLAX_BunkerRicochet(players[consoleplayer].mo.FindInventory("DRLAX_BunkerRicochet"));
-
-        if(r && !r.off && e.Thing && e.inflictor && e.damagesource)
+        if(e.inflictor is "Rocket" && e.damagesource)
         {
-            if(e.inflictor is "Rocket" && e.DamageFlags & DMG_EXPLOSION)
+            DRLAX_BunkerRicochet r = DRLAX_BunkerRicochet(e.damagesource.FindInventory("DRLAX_BunkerRicochet"));
+
+            if(r && !r.off && e.Thing && e.inflictor)
+        {
+                if(e.DamageFlags & DMG_EXPLOSION)
             {
+                    //Console.Printf("owwie!");
                 e.Thing.DamageMobj(e.inflictor, e.damagesource, e.damage * 0.25, e.damagetype, DMG_THRUSTLESS|DMG_NO_PAIN);
             }
         }
+    }
+    }
+
+    ui bool WeaponIsPistol()
+    {
+        return (players[consoleplayer].ReadyWeapon is "RLPistolWeapon" || 
+        players[consoleplayer].ReadyWeapon is "RLMarathonShotguns" || 
+        players[consoleplayer].ReadyWeapon is "RLDeathsGaze" ||
+        players[consoleplayer].ReadyWeapon is "RLAssaultRifleUzi");
     }
 
     override void RenderOverlay (RenderEvent event)
@@ -67,16 +91,17 @@ Class RLBunkerEvents : StaticEventHandler
                 }
             }
 
-            if(s.onyxgot[s.ONYX_DUELIST] && players[consoleplayer].ReadyWeapon is "RLPistolWeapon")
+            if(s.onyxgot[s.ONYX_DUELIST])
+            {
+                if(WeaponIsPistol())      
             {
                 haschaingun = true;
             }
+            }
 
-			int X = CVar.GetCVar("drpg_drla_x", players[consoleplayer]).GetInt();
-			int Y = CVar.GetCVar("drpg_drla_y", players[consoleplayer]).GetInt();   
-			int XOff = - 140, YOff = - 23;	
+            int aspectoffs;
 
-            if(Screen.GetAspectRatio() < 1.3)
+            if(Screen.GetAspectRatio() < 1.7)
             {
                 XOff = - 279;
                 YOff = + 5;
@@ -638,6 +663,15 @@ Class DRLAX_BunkerShield : Inventory
         "RLNanoManufactureAmmoMinigun"
 		};
 
+    static bool WeaponIsPistol()
+    {
+        return (players[consoleplayer].ReadyWeapon is "RLPistolWeapon" || 
+        players[consoleplayer].ReadyWeapon is "RLMarathonShotguns" || 
+        players[consoleplayer].ReadyWeapon is "RLDeathsGaze" ||
+        players[consoleplayer].ReadyWeapon is "RLAssaultRifleUzi");
+    }
+
+
     bool FiringChaingun(Playerinfo p)
     {
         if(!p)
@@ -660,7 +694,7 @@ Class DRLAX_BunkerShield : Inventory
             return true;
         }
 
-        if(onyxgot[ONYX_DUELIST] && allowpistols && p.readyweapon is "RLPistolWeapon")
+        if(onyxgot[ONYX_DUELIST] && allowpistols && WeaponIsPistol())
         {
         //Console.Printf("f");
             return true;
@@ -1303,7 +1337,7 @@ class DRLAX_BunkerRicochet : DRLAX_BaseInventory
         {
             off = true;
 		    owner.A_Print("Ricochet Rockets disabled.");
-            SetTag("Ricochet Rockets \cg(Enabled)");
+            SetTag("Ricochet Rockets \cg(Disabled)");
             icon = TexMan.CheckForTexture("LAXITE7", TexMan.Type_Any, 0);
             return;
         }

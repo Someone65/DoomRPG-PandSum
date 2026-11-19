@@ -1,5 +1,43 @@
 class DRLAX_FamiliarEvents : EventHandler
 {
+    override void NetworkProcess(ConsoleEvent e)
+    {
+		if(e.name == "debug_removefamiliars")
+		{
+		    Actor player = players[e.player].mo;
+
+            DRLAX_FamiliarManager.RemoveAllFamiliars(player);
+		}
+
+        if(e.name == "debug_removefamiliar")
+		{
+		    Actor player = players[e.player].mo;
+
+            DRLAX_FamiliarManager.RemoveFamiliar(player, e.Args[0]);
+		}
+
+        if(e.name.IndexOf("debug_spawnfamiliar") >= 0)
+		{
+		    Actor player = players[e.player].mo;
+            
+            DRLAX_FamiliarBall f = DRLAX_FamiliarBall(Actor.Spawn("DRLAX_FamiliarBall", player.pos));
+            if(f)
+            {
+                string familiar = "Zombieman";
+
+                Array<string> command;
+			    e.Name.Split (command, ":");
+
+                if(command.Size() == 2)
+                {
+                    familiar = command[1];
+                }
+
+                f.Init(familiar);
+            }
+		}
+    }
+
     override void WorldTick()
     {
         if(Level.Time == 2)
@@ -153,10 +191,7 @@ class DRLAX_FamiliarEvents : EventHandler
                             if(f.fam[i] && f.fam[i] is "DRLAX_SargeFamiliar")
                             {
                                 sarge = DRLAX_SargeFamiliar(f.fam[i]);
-                                //if( sarge.Distance3D(a.target)>50)
-                                //{
                                     sarge.firedm = a.GetClassName();
-                                //}
                             }
                         }
                     }
@@ -318,7 +353,7 @@ class DRLAX_FamiliarBase : Actor
 
         if(tracer)
         {
-            if(playeractor && playeractor.health > 0)
+            if(playeractor && playeractor.health > 0 && !playeractor.player.IsTotallyFrozen())
             {
                 FamiliarAction();
             }
@@ -760,7 +795,7 @@ class DRLAX_FamiliarManager : Inventory
                     continue;
                 }
 
-                fams.Push(AllActorClasses[i]);
+                fams.Push((class <DRLAX_FamiliarBase>)(AllActorClasses[i]));
             }
         }
 
@@ -866,14 +901,12 @@ class DRLAX_FamiliarManager : Inventory
             {
                 fam[slot].A_SetTranslation("");
             }
-
-            fam[slot].ACS_NamedExecuteAlways("FamiliarInit", 0, owner.PlayerNumber(), slot);
         }
     }
 
     override void ModifyDamage (int damage, Name damageType, out int newdamage, bool passive, Actor inflictor, Actor source, int flags)
     {
-        if (!passive && damage > 0 && source && source.health > 0 && source.bISMONSTER)
+        if (!passive && damage > 0 && source && source.health > 0 && source.bISMONSTER && !source.bFRIENDLY)
         {
             for(int i; i<fam.Size(); i++)
             {

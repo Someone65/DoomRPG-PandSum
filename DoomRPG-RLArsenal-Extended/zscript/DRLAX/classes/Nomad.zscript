@@ -36,7 +36,7 @@ Class RLNomadEvents : EventHandler
 		{
 			for(int i; i<players.Size(); i++)
 			{
-				if(players[i].mo && Players[i].mo.GetClassName() == "DoomRLNomadRPG")
+				if(players[i].mo && Players[i].mo.GetClassName() == "DoomRLNomad" && DRLAX_PlayTools.NoPerk(i))
 				{
 					//Console.Printf("ur lucky");
 					NomadPassive();
@@ -733,6 +733,34 @@ Class RLNomadEvents : EventHandler
 	override void WorldUnloaded (WorldEvent e) 
 	{
 		//mapsbeat++;
+		/*
+		ThinkerIterator InvIterator = ThinkerIterator.Create("Inventory");
+		
+		Inventory inv;
+		
+		while(inv = Inventory(InvIterator.Next()))
+		{
+			if(!inv.owner)
+			{
+				continue;
+			}
+			
+			if(inv.owner.GetClassName() == "DoomRLNomad")
+			{
+				if(inv.GetClassName() == "RLDangerLevel"){continue;}
+				if(inv.GetClassName() == "RLUniqueBossLevel"){continue;}
+				if(inv.GetClassName() == "DRLAX_FamiliarManager"){continue;}
+				if(inv.GetClassName() == "DRLAX_FamiliarPassive"){continue;}
+				if(inv.GetClassName() == "DRLAX_FamiliarKill"){continue;}
+
+				PlayerPawn p = PlayerPawn(inv.owner);
+				
+				p.RemoveInventory(inv);
+				//inv.owner.TakeInventory(inv.GetClassName(), inv.maxamount);
+			}
+		}
+		*/
+
 		for(int i = 0; i<Players.Size(); i++)
 		{
 			if(!Players[i].mo || Players[i].mo.GetClassName()!="DoomRLNomadRPG")

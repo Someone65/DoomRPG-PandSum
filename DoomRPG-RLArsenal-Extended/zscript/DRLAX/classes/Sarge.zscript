@@ -243,7 +243,18 @@ Class RLSargeInvBar : CustomInventory
         {
             cooldown--;
         }
+
         Super.Tick();
+    }
+
+    override bool TryPickup(in out Actor toucher)
+    {
+        if(DRLAX_PlayTools.NoPerk(toucher.PlayerNumber()))
+        {
+            return false;
+        }
+
+        return Super.TryPickup(toucher);
     }
 }
 
@@ -560,8 +571,9 @@ Class RLSargeInv : Inventory
         "RLLaserPulseLauncher",
         "RLMegatonShotgun",
         "RLGaussRifle",
-        "RLAntiMaterielRifle"
-        "RLLuciferCannon"
+        "RLAntiMaterielRifle",
+        "RLLuciferCannon",
+        "RLNuclearOnslaught"
         };
 
         if(!owner.player || !owner.player.readyweapon)

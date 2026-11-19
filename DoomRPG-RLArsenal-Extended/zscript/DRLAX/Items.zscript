@@ -182,7 +182,7 @@ class DRLAX_BaseInventory : CustomInventory
 
 	virtual void ConsumeItem()
 	{
-		if(owner.CountInv(GetClassNAme()) > 1)
+		if(owner.CountInv(GetClassName()) > 1)
 		{
 			owner.TakeInventory(GetClassName(), 1);
 			return;
@@ -198,6 +198,25 @@ class DRLAX_BaseInventory : CustomInventory
 		}
 
 		return true;
+	}
+
+	override bool TryPickup(in out Actor toucher)
+	{
+		bool success = Super.TryPickup(toucher);
+
+		if(success)
+		{
+			String prefix = "a";
+			String itag = GetTag();
+
+			if(itag.CharAt(0) == "A")
+			{
+				prefix = "an";
+			}
+			toucher.A_Print("\c-Picked up " .. prefix .. " \cf" .. itag .. "\c-.", 3, "CONFONT");
+		}
+
+		return success;
 	}
 
 	override void Travelled()

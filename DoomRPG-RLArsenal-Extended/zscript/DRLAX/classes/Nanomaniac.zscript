@@ -108,8 +108,12 @@ class RLNanoManiacStartingLoadout : CustomInventory
                 break;
             }
 
+            if(!DRLAX_PlayTools.NoPerk(PlayerNumber()))
+            {
             A_GiveInventory("RLNanoManiacPassive");
+            }
         } //
+
 		stop;
 	}
 }

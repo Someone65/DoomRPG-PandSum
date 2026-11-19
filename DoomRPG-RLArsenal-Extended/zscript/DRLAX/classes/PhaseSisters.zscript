@@ -183,6 +183,8 @@ Class RLPhaseSistersPassive : Inventory
     bool whichsis;
     int lasthealth;
     
+    bool classUpgrade;
+    
     Default
     {
 		+INVENTORY.UNDROPPABLE;
@@ -191,6 +193,8 @@ Class RLPhaseSistersPassive : Inventory
 
     override void PostBeginPlay()
     {
+        classUpgrade = Cvar.GetCvar("drlax_sistersupgrade").GetBool();
+
         spritename = "REVY";
         AddStarterItem("RLWipeAssemblies", 1);
         AddStarterItem("RLArmorSpecial", 1);
@@ -203,6 +207,15 @@ Class RLPhaseSistersPassive : Inventory
         AddStarterItem("RLStamina", 100);
         AddStarterItem("RLWeaponLimit", 1);
         AddStarterItem("RLShellshockPerk", 1);
+
+        // Upgraded
+        if(classUpgrade)
+        {
+            AddStarterItem("RLSharpshooterPerk", 1);
+            GiveInventory("RLFireangelPerk", 1);
+            owner.RadiusDamageFactor = 0;
+        }
+        
         lastwep = "RLShotgun";
 
         blacklist.Push("RLPhaseSistersPassive");
@@ -402,6 +415,10 @@ Class RLPhaseSistersPassive : Inventory
             owner.player.mo.SetInventory("RLPhaseSistersSwapToken", 1, true);
             owner.player.mo.soundclass = "phase-portia";
             spritename = "ILLP";
+            if(classUpgrade)
+            {
+                owner.RadiusDamageFactor = 1.0;
+            }
         }
         else
         {
@@ -410,6 +427,11 @@ Class RLPhaseSistersPassive : Inventory
             owner.player.mo.SetInventory("RLPhaseSistersSwapToken", 0, true);
             owner.player.mo.soundclass = "phase-terri";
             spritename = "REVY";
+
+            if(classUpgrade)
+            {
+                owner.RadiusDamageFactor = 0;
+            }
         }
         
         owner.A_SelectWeapon(newwep, SWF_SELECTPRIORITY);
