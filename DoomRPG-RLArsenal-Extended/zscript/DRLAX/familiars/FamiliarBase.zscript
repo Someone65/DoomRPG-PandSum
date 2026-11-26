@@ -1,43 +1,5 @@
 class DRLAX_FamiliarEvents : EventHandler
 {
-    override void NetworkProcess(ConsoleEvent e)
-    {
-		if(e.name == "debug_removefamiliars")
-		{
-		    Actor player = players[e.player].mo;
-
-            DRLAX_FamiliarManager.RemoveAllFamiliars(player);
-		}
-
-        if(e.name == "debug_removefamiliar")
-		{
-		    Actor player = players[e.player].mo;
-
-            DRLAX_FamiliarManager.RemoveFamiliar(player, e.Args[0]);
-		}
-
-        if(e.name.IndexOf("debug_spawnfamiliar") >= 0)
-		{
-		    Actor player = players[e.player].mo;
-            
-            DRLAX_FamiliarBall f = DRLAX_FamiliarBall(Actor.Spawn("DRLAX_FamiliarBall", player.pos));
-            if(f)
-            {
-                string familiar = "Zombieman";
-
-                Array<string> command;
-			    e.Name.Split (command, ":");
-
-                if(command.Size() == 2)
-                {
-                    familiar = command[1];
-                }
-
-                f.Init(familiar);
-            }
-		}
-    }
-
     override void WorldTick()
     {
         if(Level.Time == 2)
@@ -901,6 +863,8 @@ class DRLAX_FamiliarManager : Inventory
             {
                 fam[slot].A_SetTranslation("");
             }
+
+            fam[slot].ACS_NamedExecuteAlways("FamiliarInit", 0, owner.PlayerNumber(), slot);
         }
     }
 
