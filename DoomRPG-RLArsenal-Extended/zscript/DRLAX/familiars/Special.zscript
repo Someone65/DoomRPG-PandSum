@@ -1491,22 +1491,23 @@ class DRLAX_HunterFamiliar : DRLAX_FamiliarBase
     states
     {
         Spawn:
-        HUNT A 6;
-        HUNT BCD 6 FamiliarIdle();
+        HUN2 A 6;
+        HUN2 BCD 6 FamiliarIdle();
         loop;
         Missile:
-        HUNT E 2 A_FaceTracer(0, 0);
-        HUNT F 0 A_StartSound(attacksound, volume:GetVolume());
-		HUNT F 2 
+        HUN2 E 2 A_FaceTracer(0, 0);
+        HUN2 F 0 A_StartSound(attacksound, volume:GetVolume());
+		HUN2 F 2 
         {
             if(tracer)
             {
                 tracer.DamageMobj(self, playeractor, random(15, 30), damagetype, 0);
                 Spawn("DRLAX_HunterHitSound", tracer.pos);
+                tracer.DamageMobj(self, playeractor, random(15, 30), damagetype, 0);
             }
 
         }
-        HUNT F 5 A_FaceTracer;
+        HUN2 F 5 A_FaceTracer;
 		Goto Spawn;
     }
 
