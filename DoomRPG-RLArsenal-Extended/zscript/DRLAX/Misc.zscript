@@ -247,7 +247,12 @@ Class DRLAX_ClassEvents : EventHandler
         {
 			int extraluck;
 			
-			bool noperk = DRLAX_PlayTools.NoPerk(e.Thing.target.PlayerNumber());
+			bool noperk;
+			
+			if(e.Thing.target)
+			{
+				DRLAX_PlayTools.NoPerk(e.Thing.target.PlayerNumber());
+			}
 
 			if(e.Thing.target && e.Thing.target is "DoomRLNomad" && !noperk)
 			{
